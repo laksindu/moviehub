@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NontonGo + TMDB Search</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #00bfff;
+    }
+
+    input {
+      padding: 12px;
+      width: 300px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 20px;
+      margin-left: 10px;
+      border: none;
+      border-radius: 6px;
+      background-color: #00bfff;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #009acd;
+    }
+
+    .movie-details {
+      margin-top: 30px;
+    }
+
+    .movie-details img {
+      max-width: 200px;
+      border-radius: 8px;
+    }
+
+    iframe {
+      width: 90%;
+      max-width: 960px;
+      height: 500px;
+      margin-top: 30px;
+      border: none;
+      border-radius: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Search & Watch Movies (TMDB + NontonGo)</h1>
+
+  <input type="text" id="movieName" placeholder="Enter movie name..." />
+  <button onclick="searchMovie()">Search</button>
+
+  <div id="movieInfo" class="movie-details hidden"></div>
+  <div id="playerContainer" class="hidden"></div>
+
+  <script>
+    const tmdbKey = "c7bcf175ba313dd60177994273919b60";
+
+    async function searchMovie() {
+      const name = document.getElementById("movieName").value.trim();
+      const infoDiv = document.getElementById("movieInfo");
+      const playerDiv = document.getElementById("playerContainer");
+      infoDiv.classList.add("hidden");
+      playerDiv.classList.add("hidden");
+      infoDiv.innerHTML = "";
+      playerDiv.innerHTML = "";
+
+      if (!name) {
+        alert("Please enter a movie name.");
+        return;
+      }
+
+      const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${tmdbKey}&query=${encodeURIComponent(name)}`;
+      const searchRes = await fetch(searchUrl);
+      const searchData = await searchRes.json();
+
+      if (!searchData.results || searchData.results.length === 0) {
+        alert("Movie not found.");
+        return;
+      }
+
+      const movie = searchData.results[0];
+      const tmdbId = movie.id;
+
+      const detailsUrl = `https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${tmdbKey}&language=en-US`;
+      const detailsRes = await fetch(detailsUrl);
+      const details = await detailsRes.json();
+
+      const poster = movie.poster_path
+        ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+        : "";
+
+      infoDiv.innerHTML = `
+        <h2>${movie.title} (${movie.release_date?.split('-')[0] || "Year Unknown"})</h2>
+        <img src="${poster}" alt="Poster" />
+        <p>${details.overview}</p>
+        <button onclick="watchMovie('${tmdbId}')">Watch Now</button>
+      `;
+      infoDiv.classList.remove("hidden");
+    }
+
+    function watchMovie(tmdbId) {
+      const playerDiv = document.getElementById("playerContainer");
+      const embedUrl = `https://www.NontonGo.win/embed/movie/${tmdbId}`;
+      playerDiv.innerHTML = `<iframe src="${embedUrl}" allowfullscreen></iframe>`;
+      playerDiv.classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
